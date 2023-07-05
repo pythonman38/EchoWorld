@@ -12,10 +12,13 @@
 #include "Components/InputComponent.h"
 #include "Item.h"
 #include "Weapon.h"
+#include "Animation/AnimMontage.h"
 
 // Sets default values
 AEchoCharacter::AEchoCharacter() :
-	CharacterState(ECharacterState::ECS_Unequipped)
+	CharacterState(ECharacterState::ECS_Unequipped),
+	ActionState(EActionState::EAS_Unoccupied),
+	CarryingWeapon(false)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -66,6 +69,8 @@ void AEchoCharacter::Move(const FInputActionValue& Value)
 	// Input is a Vector2D
 	FVector2D MovementVector = Value.Get<FVector2D>();
 
+	if (ActionState != EActionState::EAS_Unoccupied) return;
+
 	if (Controller != nullptr)
 	{
 		// Find out which way is forward
@@ -97,9 +102,93 @@ void AEchoCharacter::Look(const FInputActionValue& Value)
 void AEchoCharacter::EKeyPressed()
 {
 	TObjectPtr<AWeapon> OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon)
+	if (OverlappingWeapon && !CarryingWeapon)
 	{
 		OverlappingWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"));
+		CharacterState = ECharacterState::ECS_Equipped;
+		OverlappingItem = nullptr;
+		EquippedWeapon = OverlappingWeapon;
+		CarryingWeapon = true;
+	}
+	else
+	{
+		if (ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped && CarryingWeapon)
+		{
+			PlayEquipMontage(FName("Unequip"));
+			CharacterState = ECharacterState::ECS_Unequipped;
+			ActionState = EActionState::EAS_Equipping;
+		}
+		else if (ActionState == EActionState::EAS_Unoccupied && CharacterState == ECharacterState::ECS_Unequipped && CarryingWeapon)
+		{
+			PlayEquipMontage(FName("Equip"));
+			CharacterState = ECharacterState::ECS_Equipped;
+			ActionState = EActionState::EAS_Equipping;
+		}
+	}
+}
+
+void AEchoCharacter::Attack()
+{
+	if (CharacterState == ECharacterState::ECS_Unequipped) return;
+
+	if (ActionState == EActionState::EAS_Unoccupied)
+	{
+		PlayAttackMontage();
+		ActionState = EActionState::EAS_Attacking;
+	}
+}
+
+void AEchoCharacter::FinishAttacking()
+{
+	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AEchoCharacter::PlayAttackMontage()
+{
+	auto AnimInstance = GetMesh()->GetAnimInstance();
+	const int32 Selection = FMath::RandRange(0, 1);
+	FName SectionName = FName();
+	switch (Selection)
+	{
+	case 0:
+		SectionName = FName("Attack1");
+		break;
+	case 1:
+		SectionName = FName("Attack2");
+		break;
+	}
+
+	if (AnimInstance && AttackMontage)
+	{
+		AnimInstance->Montage_Play(AttackMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
+	}
+}
+
+void AEchoCharacter::PlayEquipMontage(FName SectionName)
+{
+	auto AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && EquipMontage)
+	{
+		AnimInstance->Montage_Play(EquipMontage);
+		AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
+	}
+}
+
+void AEchoCharacter::DisarmWeapon()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttackMeshToSocket(GetMesh(), FName("SpineSocket"));
+		CharacterState = ECharacterState::ECS_Unequipped;
+	}
+}
+
+void AEchoCharacter::ArmWeapon()
+{
+	if (EquippedWeapon)
+	{
+		EquippedWeapon->AttackMeshToSocket(GetMesh(), FName("RightHandSocket"));
 		CharacterState = ECharacterState::ECS_Equipped;
 	}
 }
@@ -129,7 +218,10 @@ void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Look);
 
 		// Equipping
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AEchoCharacter::EKeyPressed);
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AEchoCharacter::EKeyPressed);
+
+		// Attacking
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Attack);
 	}
 }
 

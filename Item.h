@@ -8,6 +8,13 @@
 
 class USphereComponent;
 
+UENUM(BlueprintType)
+enum class EItemState : uint8
+{
+	EIS_Hovering UMETA(DisplayName = "Hovering"),
+	EIS_Equipped UMETA(DisplayName = "Equipped")
+};
+
 UCLASS()
 class ECHOWORLD_API AItem : public AActor
 {
@@ -48,6 +55,10 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sine Parameters", meta = (AllowPrivateAccess))
 	float TimeConstant;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess))
+	EItemState ItemState;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Static Mesh", meta = (AllowPrivateAccess))
 	TObjectPtr<UStaticMeshComponent> ItemMesh;
 
@@ -56,6 +67,10 @@ private:
 
 public:
 	// Getters for private variables
+	FORCEINLINE EItemState GetItemState() const { return ItemState; }
 	FORCEINLINE TObjectPtr<UStaticMeshComponent> GetItemMesh() const { return ItemMesh; }
+	FORCEINLINE TObjectPtr<USphereComponent> GetSphere() const { return Sphere; }
 
+	// Setters for private variables
+	FORCEINLINE void SetItemState(EItemState State) { ItemState = State; }
 };

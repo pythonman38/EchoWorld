@@ -10,7 +10,8 @@
 // Sets default values
 AItem::AItem() :
 	Amplitude(0.25f),
-	TimeConstant(5.f)
+	TimeConstant(5.f),
+	ItemState(EItemState::EIS_Hovering)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -66,5 +67,7 @@ void AItem::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	RunningTime += DeltaTime;
+
+	if (ItemState == EItemState::EIS_Hovering) AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
 }
 

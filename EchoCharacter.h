@@ -15,6 +15,8 @@ class UInputComponent;
 class UInputMappingContext;
 class UInputAction;
 class AItem;
+class UAnimMontage;
+class AWeapon;
 
 UCLASS()
 class ECHOWORLD_API AEchoCharacter : public ACharacter
@@ -44,7 +46,28 @@ protected:
 	// Called to allow the Character to pickup a Weapon
 	void EKeyPressed();
 
+	// Called to allow Character to attack Enemies
+	void Attack();
+
+	// Called from Montage to set ActionState to Unoccupied
+	UFUNCTION(BlueprintCallable)
+	void FinishAttacking();
+
+	// Plays attack Montage when Action State is Unoccupied
+	void PlayAttackMontage();
+
+	void PlayEquipMontage(FName SectionName);
+
+	UFUNCTION(BlueprintCallable)
+	void DisarmWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void ArmWeapon();
+
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	bool CarryingWeapon;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
 
@@ -72,11 +95,26 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> EquipAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> AttackAction;
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AItem> OverlappingItem;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	ECharacterState CharacterState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAnimMontage> AttackMontage;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UAnimMontage> EquipMontage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AWeapon> EquippedWeapon;
 
 public:
 	// Getters for private variables

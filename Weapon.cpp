@@ -3,8 +3,18 @@
 
 #include "Weapon.h"
 #include "EchoCharacter.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/SphereComponent.h"
 
 void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName)
+{
+	AttackMeshToSocket(InParent, InSocketName);
+	SetItemState(EItemState::EIS_Equipped);
+	if (EquipSound) UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
+	if (GetSphere()) GetSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void AWeapon::AttackMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
 {
 	FAttachmentTransformRules TransformRules(EAttachmentRule::SnapToTarget, true);
 	GetItemMesh()->AttachToComponent(InParent, TransformRules, InSocketName);
