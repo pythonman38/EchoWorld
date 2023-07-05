@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "CharacterTypes.h"
 #include "EchoCharacter.generated.h"
 
 class USpringArmComponent;
@@ -13,6 +14,7 @@ class UGroomComponent;
 class UInputComponent;
 class UInputMappingContext;
 class UInputAction;
+class AItem;
 
 UCLASS()
 class ECHOWORLD_API AEchoCharacter : public ACharacter
@@ -33,12 +35,14 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-
 	// Called for movement input
 	void Move(const FInputActionValue& Value);
 
 	// Called for looking input
 	void Look(const FInputActionValue& Value);
+
+	// Called to allow the Character to pickup a Weapon
+	void EKeyPressed();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
@@ -64,5 +68,21 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UInputAction> LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UInputAction> EquipAction;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AItem> OverlappingItem;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	ECharacterState CharacterState;
+
+public:
+	// Getters for private variables
+	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+
+	// Setters for private variables
+	FORCEINLINE void SetOverlappingItem(TObjectPtr<AItem> Item) { OverlappingItem = Item; }
 
 };

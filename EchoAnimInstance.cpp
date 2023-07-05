@@ -27,5 +27,8 @@ void UEchoAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 		// Is the character moving?
 		bIsMoving = EchoCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0;
+
+		// What is the current state of the Character?
+		CharacterState = EchoCharacter->GetCharacterState();
 	}
 }

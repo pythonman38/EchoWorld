@@ -10,9 +10,12 @@
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Controller.h"
 #include "Components/InputComponent.h"
+#include "Item.h"
+#include "Weapon.h"
 
 // Sets default values
-AEchoCharacter::AEchoCharacter()
+AEchoCharacter::AEchoCharacter() :
+	CharacterState(ECharacterState::ECS_Unequipped)
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -91,6 +94,16 @@ void AEchoCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
+void AEchoCharacter::EKeyPressed()
+{
+	TObjectPtr<AWeapon> OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
+	if (OverlappingWeapon)
+	{
+		OverlappingWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"));
+		CharacterState = ECharacterState::ECS_Equipped;
+	}
+}
+
 // Called every frame
 void AEchoCharacter::Tick(float DeltaTime)
 {
@@ -114,6 +127,9 @@ void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Look);
+
+		// Equipping
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Triggered, this, &AEchoCharacter::EKeyPressed);
 	}
 }
 
