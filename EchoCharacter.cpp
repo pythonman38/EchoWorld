@@ -13,6 +13,7 @@
 #include "Item.h"
 #include "Weapon.h"
 #include "Animation/AnimMontage.h"
+#include "Components/BoxComponent.h"
 
 // Sets default values
 AEchoCharacter::AEchoCharacter() :
@@ -165,7 +166,7 @@ void AEchoCharacter::PlayAttackMontage()
 	}
 }
 
-void AEchoCharacter::PlayEquipMontage(FName SectionName)
+void AEchoCharacter::PlayEquipMontage(const FName& SectionName)
 {
 	auto AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && EquipMontage)
@@ -190,6 +191,15 @@ void AEchoCharacter::ArmWeapon()
 	{
 		EquippedWeapon->AttackMeshToSocket(GetMesh(), FName("RightHandSocket"));
 		CharacterState = ECharacterState::ECS_Equipped;
+	}
+}
+
+void AEchoCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
+	{
+		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
+		EquippedWeapon->IgnoreActors.Empty();
 	}
 }
 

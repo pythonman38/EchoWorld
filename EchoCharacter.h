@@ -56,13 +56,16 @@ protected:
 	// Plays attack Montage when Action State is Unoccupied
 	void PlayAttackMontage();
 
-	void PlayEquipMontage(FName SectionName);
+	void PlayEquipMontage(const FName& SectionName);
 
 	UFUNCTION(BlueprintCallable)
 	void DisarmWeapon();
 
 	UFUNCTION(BlueprintCallable)
 	void ArmWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
