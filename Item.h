@@ -7,6 +7,7 @@
 #include "Item.generated.h"
 
 class USphereComponent;
+class UNiagaraComponent;
 
 UENUM(BlueprintType)
 enum class EItemState : uint8
@@ -65,9 +66,13 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Static Mesh", meta = (AllowPrivateAccess))
 	TObjectPtr<USphereComponent> Sphere;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess))
+	TObjectPtr<UNiagaraComponent> EmbersEffect;
+
 public:
 	// Getters for private variables
 	FORCEINLINE EItemState GetItemState() const { return ItemState; }
+	FORCEINLINE TObjectPtr<UNiagaraComponent> GetEmbersEffect() const { return EmbersEffect; }
 	FORCEINLINE TObjectPtr<UStaticMeshComponent> GetItemMesh() const { return ItemMesh; }
 	FORCEINLINE TObjectPtr<USphereComponent> GetSphere() const { return Sphere; }
 

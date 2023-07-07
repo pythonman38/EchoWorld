@@ -8,6 +8,8 @@
 #include "BreakableActor.generated.h"
 
 class UGeometryCollectionComponent;
+class ATreasure;
+class UCapsuleComponent;
 
 UCLASS()
 class ECHOWORLD_API ABreakableActor : public AActor, public IHitInterface
@@ -27,8 +29,17 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-private:	
+private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Geo Collection", meta = (AllowPrivateAccess = "true"))
+	bool bBroken;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Geo Collection", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UGeometryCollectionComponent> GeometryCollection;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Breakable Properties", meta = (AllowPrivateAccess = "true"))
+	TArray<TSubclassOf<ATreasure>> TreasureClasses;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Geo Collection", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCapsuleComponent> Capsule;
 
 };

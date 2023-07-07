@@ -3,9 +3,12 @@
 
 #include "BreakableActor.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
+#include "Treasure.h"
+#include "Components/CapsuleComponent.h"
 
 // Sets default values
-ABreakableActor::ABreakableActor()
+ABreakableActor::ABreakableActor() :
+	bBroken(false)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
@@ -15,6 +18,12 @@ ABreakableActor::ABreakableActor()
 
 	GeometryCollection->SetGenerateOverlapEvents(true);
 	GeometryCollection->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GeometryCollection->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+
+	Capsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("CapsuleComp"));
+	Capsule->SetupAttachment(GetRootComponent());
+	Capsule->SetCollisionResponseToAllChannels(ECR_Ignore);
+	Capsule->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
 }
 
 // Called when the game starts or when spawned
@@ -31,4 +40,14 @@ void ABreakableActor::Tick(float DeltaTime)
 
 void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint)
 {
+	if (bBroken) return;
+	bBroken = true;
+	auto World = GetWorld();
+	if (World && TreasureClasses.Num() > 0)
+	{
+		FVector Location = GetActorLocation();
+		Location.Z += 75.f;
+		const int32 Selection = FMath::RandRange(0, TreasureClasses.Num() - 1);
+		World->SpawnActor<ATreasure>(TreasureClasses[Selection], Location, GetActorRotation());
+	}
 }

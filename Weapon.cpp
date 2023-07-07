@@ -8,6 +8,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "HitInterface.h"
+#include "NiagaraComponent.h"
 
 AWeapon::AWeapon()
 {
@@ -37,6 +38,7 @@ void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName)
 	SetItemState(EItemState::EIS_Equipped);
 	if (EquipSound) UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
 	if (GetSphere()) GetSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (GetEmbersEffect()) GetEmbersEffect()->Deactivate();
 }
 
 void AWeapon::AttackMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
