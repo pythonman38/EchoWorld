@@ -20,7 +20,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	void EquipWeapon(USceneComponent* InParent, FName InSocketName);
+	void EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
 	void AttackMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
@@ -38,6 +38,9 @@ protected:
 	void CreateFields(const FVector& FieldLocation);
 
 private:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
+	float Damage;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Weapon Properties", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USoundBase> EquipSound;
 

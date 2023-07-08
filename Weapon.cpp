@@ -10,7 +10,8 @@
 #include "HitInterface.h"
 #include "NiagaraComponent.h"
 
-AWeapon::AWeapon()
+AWeapon::AWeapon() :
+	Damage(20.f)
 {
 	WeaponBox = CreateDefaultSubobject<UBoxComponent>(TEXT("WeaponBox"));
 	WeaponBox->SetupAttachment(GetRootComponent());
@@ -32,8 +33,10 @@ void AWeapon::BeginPlay()
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxBeginOverlap);
 }
 
-void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName)
+void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
+	SetOwner(NewOwner);
+	SetInstigator(NewInstigator);
 	AttackMeshToSocket(InParent, InSocketName);
 	SetItemState(EItemState::EIS_Equipped);
 	if (EquipSound) UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
@@ -71,10 +74,14 @@ void AWeapon::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 
 	if (BoxHit.GetActor())
 	{
+		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+
 		IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
 		if (HitInterface) HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint);
 		IgnoreActors.AddUnique(BoxHit.GetActor());
 
 		CreateFields(BoxHit.ImpactPoint);
+
+		
 	}
 }

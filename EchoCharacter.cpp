@@ -105,7 +105,7 @@ void AEchoCharacter::EKeyPressed()
 	TObjectPtr<AWeapon> OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
 	if (OverlappingWeapon && !CarryingWeapon)
 	{
-		OverlappingWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"));
+		OverlappingWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"), this, this);
 		CharacterState = ECharacterState::ECS_Equipped;
 		OverlappingItem = nullptr;
 		EquippedWeapon = OverlappingWeapon;
