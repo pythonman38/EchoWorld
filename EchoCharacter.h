@@ -37,6 +37,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void AddInputMappingContext();
+
 	// Called for movement input
 	void Move(const FInputActionValue& Value);
 

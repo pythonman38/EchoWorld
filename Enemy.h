@@ -11,6 +11,8 @@
 class UInputComponent;
 class UAttributeComponent;
 class UHealthBarComponent;
+class AAIController;
+class UPawnSensingComponent;
 
 UCLASS()
 class ECHOWORLD_API AEnemy : public ACharacter, public IHitInterface
@@ -37,18 +39,56 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void StartEnemyPatrol();
+
+	void CheckPatrolTarget();
+
+	void DisplayEnemyHealthBar();
+
 	void PlayHitReactMontage(const FName& SectionName);
 
 	void Die();
 
-	void PickRandomDeathMontage();
+	void PlayRandomDeathMontage();
 
-private:	
+	bool InTargetRange(AActor* Target, double Radius);
+
+	void MoveToTarget(AActor* Target);
+
+	void PatrolTimerFinished();
+
+	AActor* ChoosePatrolTarget();
+
+	void CheckCombatTarget();
+
+	UFUNCTION()
+	void PawnSeen(APawn* SeenPawn);
+
+private:
+	FTimerHandle PatrolTimer;
+
+	float WalkSpeed, RunSpeed;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	double CombatRadius;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	double AttackRadius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	double PatrolRadius;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
+	float WaitTimeMin;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
+	float WaitTimeMax;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EDeathPose DeathPose;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	EEnemyState EnemyState;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAnimMontage> HitReactMontage;
@@ -71,4 +111,15 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> CombatTarget;
 
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> PatrolTarget;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
+	TArray<TObjectPtr<AActor>> PatrolTargets;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AAIController> EnemyController;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UPawnSensingComponent> PawnSensing;
 };

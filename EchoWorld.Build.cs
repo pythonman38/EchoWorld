@@ -10,7 +10,7 @@ public class EchoWorld : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] 
 		{ 
-			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "HairStrandsCore", "Niagara", "GeometryCollectionEngine", "UMG",  
+			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "HairStrandsCore", "Niagara", "GeometryCollectionEngine", "UMG", "AIModule"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

@@ -55,7 +55,13 @@ void AEchoCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//Add Input Mapping Context
+	Tags.Add(FName("Player"));
+
+	AddInputMappingContext();
+}
+
+void AEchoCharacter::AddInputMappingContext()
+{
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
