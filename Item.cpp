@@ -2,8 +2,7 @@
 
 
 #include "Item.h"
-#include "DrawDebugHelpers.h"
-#include "DebugMacros.h"
+
 #include "Components/SphereComponent.h"
 #include "EchoCharacter.h"
 #include "NiagaraComponent.h"
@@ -18,7 +17,8 @@ AItem::AItem() :
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ItemMeshComp"));
-	ItemMesh->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	ItemMesh->SetCollisionResponseToAllChannels(ECR_Ignore);
+	ItemMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetRootComponent(ItemMesh);
 
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));

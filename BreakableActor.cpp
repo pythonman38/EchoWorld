@@ -2,9 +2,10 @@
 
 
 #include "BreakableActor.h"
+
+#include "Components/CapsuleComponent.h"
 #include "GeometryCollection/GeometryCollectionComponent.h"
 #include "Treasure.h"
-#include "Components/CapsuleComponent.h"
 
 // Sets default values
 ABreakableActor::ABreakableActor() :

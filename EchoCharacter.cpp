@@ -2,30 +2,39 @@
 
 
 #include "EchoCharacter.h"
+
+#include "Animation/AnimMontage.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GroomComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/InputComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Controller.h"
-#include "Components/InputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "GroomComponent.h"
 #include "Item.h"
 #include "Weapon.h"
-#include "Animation/AnimMontage.h"
-#include "Components/BoxComponent.h"
+
+
 
 // Sets default values
 AEchoCharacter::AEchoCharacter() :
 	CharacterState(ECharacterState::ECS_Unequipped),
 	ActionState(EActionState::EAS_Unoccupied),
-	CarryingWeapon(false)
+	bCarryingWeapon(false)
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
+
+	GetMesh()->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
+	GetMesh()->SetCollisionResponseToAllChannels(ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
+	GetMesh()->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Overlap);
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -50,7 +59,37 @@ AEchoCharacter::AEchoCharacter() :
 	Eyebrows->AttachmentName = FString("head");
 }
 
-// Called when the game starts or when spawned
+void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+	// Set up action bindings
+	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
+
+		// Jumping
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+
+		// Moving
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Move);
+
+		// Looking
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Look);
+
+		// Equipping
+		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AEchoCharacter::EKeyPressed);
+
+		// Attacking
+		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Attack);
+	}
+}
+
+void AEchoCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+{
+	PlayHitSound(ImpactPoint);
+	SpawnHitParticles(ImpactPoint);
+}
+
 void AEchoCharacter::BeginPlay()
 {
 	Super::BeginPlay();
@@ -58,6 +97,22 @@ void AEchoCharacter::BeginPlay()
 	Tags.Add(FName("Player"));
 
 	AddInputMappingContext();
+}
+
+void AEchoCharacter::Attack()
+{
+	if (CharacterState == ECharacterState::ECS_Unequipped) return;
+
+	if (ActionState == EActionState::EAS_Unoccupied)
+	{
+		PlayAttackMontage();
+		ActionState = EActionState::EAS_Attacking;
+	}
+}
+
+void AEchoCharacter::FinishAttacking()
+{
+	ActionState = EActionState::EAS_Unoccupied;
 }
 
 void AEchoCharacter::AddInputMappingContext()
@@ -109,67 +164,45 @@ void AEchoCharacter::Look(const FInputActionValue& Value)
 void AEchoCharacter::EKeyPressed()
 {
 	TObjectPtr<AWeapon> OverlappingWeapon = Cast<AWeapon>(OverlappingItem);
-	if (OverlappingWeapon && !CarryingWeapon)
-	{
-		OverlappingWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"), this, this);
-		CharacterState = ECharacterState::ECS_Equipped;
-		OverlappingItem = nullptr;
-		EquippedWeapon = OverlappingWeapon;
-		CarryingWeapon = true;
-	}
+	if (OverlappingWeapon && !bCarryingWeapon) EquipWeapon(OverlappingWeapon);
 	else
 	{
-		if (ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped && CarryingWeapon)
-		{
-			PlayEquipMontage(FName("Unequip"));
-			CharacterState = ECharacterState::ECS_Unequipped;
-			ActionState = EActionState::EAS_Equipping;
-		}
-		else if (ActionState == EActionState::EAS_Unoccupied && CharacterState == ECharacterState::ECS_Unequipped && CarryingWeapon)
-		{
-			PlayEquipMontage(FName("Equip"));
-			CharacterState = ECharacterState::ECS_Equipped;
-			ActionState = EActionState::EAS_Equipping;
-		}
+		if (CanDisarm()) DisarmWeapon();
+		else if (CanArm()) ArmWeapon();
 	}
 }
 
-void AEchoCharacter::Attack()
+void AEchoCharacter::EquipWeapon(AWeapon* Weapon)
 {
-	if (CharacterState == ECharacterState::ECS_Unequipped) return;
-
-	if (ActionState == EActionState::EAS_Unoccupied)
-	{
-		PlayAttackMontage();
-		ActionState = EActionState::EAS_Attacking;
-	}
+	Weapon->EquipWeapon(GetMesh(), FName("RightHandSocket"), this, this);
+	CharacterState = ECharacterState::ECS_Equipped;
+	OverlappingItem = nullptr;
+	EquippedWeapon = Weapon;
+	bCarryingWeapon = true;
 }
 
-void AEchoCharacter::FinishAttacking()
+void AEchoCharacter::ArmWeapon()
 {
-	ActionState = EActionState::EAS_Unoccupied;
+	PlayEquipMontage(FName("Equip"));
+	CharacterState = ECharacterState::ECS_Equipped;
+	ActionState = EActionState::EAS_Equipping;
 }
 
-void AEchoCharacter::PlayAttackMontage()
+void AEchoCharacter::DisarmWeapon()
 {
-	auto AnimInstance = GetMesh()->GetAnimInstance();
-	const int32 Selection = FMath::RandRange(0, 1);
-	FName SectionName = FName();
-	switch (Selection)
-	{
-	case 0:
-		SectionName = FName("Attack1");
-		break;
-	case 1:
-		SectionName = FName("Attack2");
-		break;
-	}
+	PlayEquipMontage(FName("Unequip"));
+	CharacterState = ECharacterState::ECS_Unequipped;
+	ActionState = EActionState::EAS_Equipping;
+}
 
-	if (AnimInstance && AttackMontage)
-	{
-		AnimInstance->Montage_Play(AttackMontage);
-		AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);
-	}
+bool AEchoCharacter::CanArm()
+{
+	return ActionState == EActionState::EAS_Unoccupied && CharacterState == ECharacterState::ECS_Unequipped && bCarryingWeapon;
+}
+
+bool AEchoCharacter::CanDisarm()
+{
+	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped && bCarryingWeapon;
 }
 
 void AEchoCharacter::PlayEquipMontage(const FName& SectionName)
@@ -182,7 +215,7 @@ void AEchoCharacter::PlayEquipMontage(const FName& SectionName)
 	}
 }
 
-void AEchoCharacter::DisarmWeapon()
+void AEchoCharacter::AttachWeaponToBack()
 {
 	if (EquippedWeapon)
 	{
@@ -191,7 +224,7 @@ void AEchoCharacter::DisarmWeapon()
 	}
 }
 
-void AEchoCharacter::ArmWeapon()
+void AEchoCharacter::AttachWeaponToHand()
 {
 	if (EquippedWeapon)
 	{
@@ -199,45 +232,3 @@ void AEchoCharacter::ArmWeapon()
 		CharacterState = ECharacterState::ECS_Equipped;
 	}
 }
-
-void AEchoCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
-{
-	if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
-	{
-		EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
-		EquippedWeapon->IgnoreActors.Empty();
-	}
-}
-
-// Called every frame
-void AEchoCharacter::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-// Called to bind functionality to input
-void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
-
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
-
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Move);
-
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Look);
-
-		// Equipping
-		EnhancedInputComponent->BindAction(EquipAction, ETriggerEvent::Started, this, &AEchoCharacter::EKeyPressed);
-
-		// Attacking
-		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Attack);
-	}
-}
-

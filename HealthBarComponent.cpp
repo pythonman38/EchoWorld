@@ -2,8 +2,9 @@
 
 
 #include "HealthBarComponent.h"
-#include "HealthBar.h"
+
 #include "Components/ProgressBar.h"
+#include "HealthBar.h"
 
 void UHealthBarComponent::SetHealthPercent(float Percent)
 {

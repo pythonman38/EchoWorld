@@ -3,41 +3,55 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
-#include "HitInterface.h"
+#include "BaseCharacter.h"
 #include "CharacterTypes.h"
 #include "Enemy.generated.h"
 
 class UInputComponent;
-class UAttributeComponent;
 class UHealthBarComponent;
 class AAIController;
 class UPawnSensingComponent;
+class AWeapon;
 
 UCLASS()
-class ECHOWORLD_API AEnemy : public ACharacter, public IHitInterface
+class ECHOWORLD_API AEnemy : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AEnemy();
 
-	// Called every frame
+	/** <AActor> */
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
-
-	void DirectionalHitReact(const FVector& ImpactPoint);
 
 	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
+	virtual void Destroyed() override;
+	/** </AActor> */
+
+	/** <IHitInterface> */
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	/** </IHitInterface> */
+
 protected:
-	// Called when the game starts or when spawned
+	/** <ABaseCharacter> */
+	virtual void Die() override;
+
+	virtual void Attack() override;
+
+	virtual void HandleDamage(float Damage) override;
+
+	virtual int32 PlayDeathMontage() override;
+
+	virtual void FinishAttacking() override;
+	/** </ABaseCharacter> */
+
+protected:
+	/** <AActor> */
 	virtual void BeginPlay() override;
+	/** </AActor> */
+
+	void SpawnDefaultWeapon();
 
 	void StartEnemyPatrol();
 
@@ -45,29 +59,33 @@ protected:
 
 	void DisplayEnemyHealthBar();
 
-	void PlayHitReactMontage(const FName& SectionName);
-
-	void Die();
-
-	void PlayRandomDeathMontage();
-
 	bool InTargetRange(AActor* Target, double Radius);
 
 	void MoveToTarget(AActor* Target);
 
 	void PatrolTimerFinished();
 
+	void PatrolAndOrAttack();
+
 	AActor* ChoosePatrolTarget();
 
 	void CheckCombatTarget();
 
+	void StartPatrolling();
+
 	UFUNCTION()
 	void PawnSeen(APawn* SeenPawn);
+
+	void ChaseTarget();
+
+	void StartAttackTimer();
+
+	bool CanAttack();
 
 private:
 	FTimerHandle PatrolTimer;
 
-	float WalkSpeed, RunSpeed;
+	float PatrolSpeed, ChaseSpeed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	double CombatRadius;
@@ -79,31 +97,27 @@ private:
 	double PatrolRadius;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
-	float WaitTimeMin;
+	float PatrolWaitMin;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
-	float WaitTimeMax;
+	float PatrolWaitMax;
+
+	FTimerHandle AttackTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float AttackMin;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	float AttackMax;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	EDeathPose DeathPose;
+	TEnumAsByte<EDeathPose> DeathPose;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EEnemyState EnemyState;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAnimMontage> HitReactMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAnimMontage> DeathMontage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Sounds, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USoundBase> HitSound;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual Effects", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UParticleSystem> HitParticles;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enemy Attributes", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAttributeComponent> Attributes;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<AWeapon> WeaponClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widget, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UHealthBarComponent> HealthBarWidget;

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Character.h"
+#include "BaseCharacter.h"
 #include "InputActionValue.h"
 #include "CharacterTypes.h"
 #include "EchoCharacter.generated.h"
@@ -15,63 +15,64 @@ class UInputComponent;
 class UInputMappingContext;
 class UInputAction;
 class AItem;
-class UAnimMontage;
-class AWeapon;
 
 UCLASS()
-class ECHOWORLD_API AEchoCharacter : public ACharacter
+class ECHOWORLD_API AEchoCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+	/** <AActor> */
 	AEchoCharacter();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
+	
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	/** </AActor> */
+
+	/** <IHitInterface */
+	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	/** </IHitInterface */
 
 protected:
-	// Called when the game starts or when spawned
+	/** <AActor> */
 	virtual void BeginPlay() override;
+	/** </AActor> */
 
+	/** <ABaseCharacter> */
+	virtual void Attack() override;
+
+	virtual void FinishAttacking() override;
+	/** </ABaseCharacter> */
+
+protected:
 	void AddInputMappingContext();
 
-	// Called for movement input
 	void Move(const FInputActionValue& Value);
 
-	// Called for looking input
 	void Look(const FInputActionValue& Value);
 
-	// Called to allow the Character to pickup a Weapon
 	void EKeyPressed();
 
-	// Called to allow Character to attack Enemies
-	void Attack();
+	void EquipWeapon(AWeapon* Weapon);
 
-	// Called from Montage to set ActionState to Unoccupied
-	UFUNCTION(BlueprintCallable)
-	void FinishAttacking();
+	void ArmWeapon();
 
-	// Plays attack Montage when Action State is Unoccupied
-	void PlayAttackMontage();
+	void DisarmWeapon();
+
+	bool CanArm();
+
+	bool CanDisarm();
 
 	void PlayEquipMontage(const FName& SectionName);
 
 	UFUNCTION(BlueprintCallable)
-	void DisarmWeapon();
+	void AttachWeaponToBack();
 
 	UFUNCTION(BlueprintCallable)
-	void ArmWeapon();
-
-	UFUNCTION(BlueprintCallable)
-	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+	void AttachWeaponToHand();
 
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
-	bool CarryingWeapon;
+	bool bCarryingWeapon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -113,19 +114,12 @@ private:
 	EActionState ActionState;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UAnimMontage> AttackMontage;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAnimMontage> EquipMontage;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AWeapon> EquippedWeapon;
 
 public:
 	// Getters for private variables
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
 
 	// Setters for private variables
-	FORCEINLINE void SetOverlappingItem(TObjectPtr<AItem> Item) { OverlappingItem = Item; }
-
+	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
 };

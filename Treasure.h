@@ -28,6 +28,4 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Sounds, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USoundBase> PickupSound;
-
-	
 };
