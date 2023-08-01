@@ -30,7 +30,7 @@ public:
 	/** </AActor> */
 
 	/** <IHitInterface> */
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	/** </IHitInterface> */
 
 protected:
@@ -43,7 +43,7 @@ protected:
 
 	virtual int32 PlayDeathMontage() override;
 
-	virtual void FinishAttacking() override;
+	virtual void FinishAction() override;
 	/** </ABaseCharacter> */
 
 protected:
@@ -121,9 +121,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widget, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UHealthBarComponent> HealthBarWidget;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AActor> CombatTarget;
 
 	UPROPERTY(EditInstanceOnly, BlueprintReadWrite, Category = "AI Navigation", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> PatrolTarget;

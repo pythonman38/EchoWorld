@@ -36,14 +36,14 @@ void AWeapon::BeginPlay()
 	WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxBeginOverlap);
 }
 
-void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
+void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator, bool bIsCharacter)
 {
 	SetItemState(EItemState::EIS_Equipped);
 	SetOwner(NewOwner);
 	SetInstigator(NewInstigator);
 	AttackMeshToSocket(InParent, InSocketName);
 	if (GetSphere()) GetSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	if (EquipSound) UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
+	if (EquipSound && bIsCharacter) UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
 	if (GetEmbersEffect()) GetEmbersEffect()->Deactivate();
 }
 
@@ -85,5 +85,5 @@ void AWeapon::BoxTrace(FHitResult& BoxHit)
 void AWeapon::ExecuteGetHit(FHitResult& BoxHit)
 {
 	IHitInterface* HitInterface = Cast<IHitInterface>(BoxHit.GetActor());
-	if (HitInterface) HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint);
+	if (HitInterface) HitInterface->Execute_GetHit(BoxHit.GetActor(), BoxHit.ImpactPoint, GetOwner());
 }

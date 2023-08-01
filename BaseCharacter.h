@@ -19,6 +19,10 @@ class ECHOWORLD_API ABaseCharacter : public ACharacter, public IHitInterface
 public:
 	ABaseCharacter();
 
+	/** <IHitInterface> */
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
+	/** </IHitInterface> */
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -31,11 +35,9 @@ protected:
 	virtual int32 PlayDeathMontage();
 
 	UFUNCTION(BlueprintCallable)
-	virtual void FinishAttacking();
+	virtual void FinishAction();
 
 	void DirectionalHitReact(const FVector& ImpactPoint);
-
-	void PlayHitReactMontage(const FName& SectionName);
 
 	void PlayHitSound(const FVector& ImpactPoint);
 
@@ -47,10 +49,23 @@ protected:
 
 	int32 PlayAttackMontage();
 
+	void StopAttackMontage();
+
+	UFUNCTION(BlueprintCallable)
+	UPARAM(DisplayName = "Target Location")
+	FVector GetTranslationWarpTarget();
+
+	UFUNCTION(BlueprintCallable)
+	UPARAM(DisplayName = "Target Location")
+	FVector GetRotationWarpTarget();
+
 	UFUNCTION(BlueprintCallable)
 	void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	double WarpTargetDistance;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TArray<FName> AttackMontageSections;
 
@@ -71,6 +86,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Character Attributes", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAttributeComponent> Attributes;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<AActor> CombatTarget;
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))

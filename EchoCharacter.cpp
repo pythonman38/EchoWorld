@@ -84,10 +84,12 @@ void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
-void AEchoCharacter::GetHit_Implementation(const FVector& ImpactPoint)
+void AEchoCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
-	PlayHitSound(ImpactPoint);
-	SpawnHitParticles(ImpactPoint);
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
+
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	ActionState = EActionState::EAS_HitReaction;
 }
 
 void AEchoCharacter::BeginPlay()
@@ -110,7 +112,7 @@ void AEchoCharacter::Attack()
 	}
 }
 
-void AEchoCharacter::FinishAttacking()
+void AEchoCharacter::FinishAction()
 {
 	ActionState = EActionState::EAS_Unoccupied;
 }
@@ -183,14 +185,14 @@ void AEchoCharacter::EquipWeapon(AWeapon* Weapon)
 
 void AEchoCharacter::ArmWeapon()
 {
-	PlayEquipMontage(FName("Equip"));
+	PlayMontageSection(EquipMontage, FName("Equip"));
 	CharacterState = ECharacterState::ECS_Equipped;
 	ActionState = EActionState::EAS_Equipping;
 }
 
 void AEchoCharacter::DisarmWeapon()
 {
-	PlayEquipMontage(FName("Unequip"));
+	PlayMontageSection(EquipMontage, FName("Unequip"));
 	CharacterState = ECharacterState::ECS_Unequipped;
 	ActionState = EActionState::EAS_Equipping;
 }
@@ -203,16 +205,6 @@ bool AEchoCharacter::CanArm()
 bool AEchoCharacter::CanDisarm()
 {
 	return ActionState == EActionState::EAS_Unoccupied && CharacterState != ECharacterState::ECS_Unequipped && bCarryingWeapon;
-}
-
-void AEchoCharacter::PlayEquipMontage(const FName& SectionName)
-{
-	auto AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && EquipMontage)
-	{
-		AnimInstance->Montage_Play(EquipMontage);
-		AnimInstance->Montage_JumpToSection(SectionName, EquipMontage);
-	}
 }
 
 void AEchoCharacter::AttachWeaponToBack()

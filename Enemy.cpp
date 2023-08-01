@@ -56,7 +56,8 @@ float AEnemy::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AControl
 {
 	HandleDamage(Damage);
 	CombatTarget = EventInstigator->GetPawn();
-	ChaseTarget();
+	if (InTargetRange(CombatTarget, AttackRadius)) EnemyState = EEnemyState::EES_Attacking;
+	else if (!InTargetRange(CombatTarget, AttackRadius)) ChaseTarget();
 	return Damage;
 }
 
@@ -65,15 +66,15 @@ void AEnemy::Destroyed()
 	if (EquippedWeapon) EquippedWeapon->Destroy();
 }
 
-void AEnemy::GetHit_Implementation(const FVector& ImpactPoint)
+void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	if (HealthBarWidget) HealthBarWidget->SetVisibility(true);
+	GetWorldTimerManager().ClearTimer(PatrolTimer);
+	GetWorldTimerManager().ClearTimer(AttackTimer);
+	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+	StopAttackMontage();
 
-	if (Attributes && Attributes->IsAlive()) DirectionalHitReact(ImpactPoint);
-	else Die();
-
-	PlayHitSound(ImpactPoint);
-	SpawnHitParticles(ImpactPoint);
+	Super::GetHit_Implementation(ImpactPoint, Hitter);
 }
 
 void AEnemy::Die()
@@ -84,7 +85,7 @@ void AEnemy::Die()
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 	if (HealthBarWidget) HealthBarWidget->SetVisibility(false);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetLifeSpan(3.f);
+	SetLifeSpan(6.f);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
 }
 
@@ -110,7 +111,7 @@ int32 AEnemy::PlayDeathMontage()
 	return Selection;
 }
 
-void AEnemy::FinishAttacking()
+void AEnemy::FinishAction()
 {
 	EnemyState = EEnemyState::EES_NoState;
 	CheckCombatTarget();
@@ -132,7 +133,7 @@ void AEnemy::SpawnDefaultWeapon()
 	if (World && WeaponClass)
 	{
 		auto DefaultWeapon = World->SpawnActor<AWeapon>(WeaponClass);
-		DefaultWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"), this, this);
+		DefaultWeapon->EquipWeapon(GetMesh(), FName("RightHandSocket"), this, this, false);
 		EquippedWeapon = DefaultWeapon;
 	}
 }

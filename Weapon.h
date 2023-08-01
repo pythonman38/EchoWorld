@@ -20,7 +20,7 @@ public:
 
 	virtual void BeginPlay() override;
 
-	void EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
+	void EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator, bool bIsCharacter = true);
 
 	void AttackMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 

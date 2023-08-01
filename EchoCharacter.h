@@ -29,7 +29,7 @@ public:
 	/** </AActor> */
 
 	/** <IHitInterface */
-	virtual void GetHit_Implementation(const FVector& ImpactPoint) override;
+	virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
 	/** </IHitInterface */
 
 protected:
@@ -40,7 +40,7 @@ protected:
 	/** <ABaseCharacter> */
 	virtual void Attack() override;
 
-	virtual void FinishAttacking() override;
+	virtual void FinishAction() override;
 	/** </ABaseCharacter> */
 
 protected:
@@ -61,8 +61,6 @@ protected:
 	bool CanArm();
 
 	bool CanDisarm();
-
-	void PlayEquipMontage(const FName& SectionName);
 
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
