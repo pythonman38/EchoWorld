@@ -31,5 +31,11 @@ void UEchoAnimInstance::NativeUpdateAnimation(float DeltaTime)
 
 		// What is the current state of the Character?
 		CharacterState = EchoCharacter->GetCharacterState();
+
+		// What is the current action of the Character?
+		ActionState = EchoCharacter->GetActionState();
+
+		// How did the Character die?
+		DeathPose = EchoCharacter->GetDeathPose();
 	}
 }

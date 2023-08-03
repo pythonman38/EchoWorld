@@ -41,8 +41,6 @@ protected:
 
 	virtual void HandleDamage(float Damage) override;
 
-	virtual int32 PlayDeathMontage() override;
-
 	virtual void FinishAction() override;
 	/** </ABaseCharacter> */
 
@@ -109,9 +107,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	float AttackMax;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	TEnumAsByte<EDeathPose> DeathPose;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	EEnemyState EnemyState;

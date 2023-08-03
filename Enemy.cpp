@@ -79,9 +79,9 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 
 void AEnemy::Die()
 {
-	EnemyState = EEnemyState::EES_Dead;
+	Super::Die();
 
-	PlayDeathMontage();
+	EnemyState = EEnemyState::EES_Dead;
 	GetWorldTimerManager().ClearTimer(AttackTimer);
 	if (HealthBarWidget) HealthBarWidget->SetVisibility(false);
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -91,8 +91,10 @@ void AEnemy::Die()
 
 void AEnemy::Attack()
 {
-	EnemyState = EEnemyState::EES_Engaged;
 	Super::Attack();
+
+	if (CombatTarget == nullptr) return;
+	EnemyState = EEnemyState::EES_Engaged;
 	PlayAttackMontage();
 }
 
@@ -101,14 +103,6 @@ void AEnemy::HandleDamage(float Damage)
 	Super::HandleDamage(Damage);
 
 	if (Attributes && HealthBarWidget) HealthBarWidget->SetHealthPercent(Attributes->GetHealthPercent());
-}
-
-int32 AEnemy::PlayDeathMontage()
-{
-	const int32 Selection = Super::PlayDeathMontage();
-	TEnumAsByte<EDeathPose> Pose(Selection);
-	if (Pose < EDeathPose::EDP_MAX) DeathPose = Pose;
-	return Selection;
 }
 
 void AEnemy::FinishAction()

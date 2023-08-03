@@ -4,10 +4,14 @@
 #include "EchoCharacter.h"
 
 #include "Animation/AnimMontage.h"
+#include "AttributeComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "EchoHUD.h"
+#include "EchoOverlay.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "GameFramework/Controller.h"
@@ -67,7 +71,7 @@ void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
@@ -84,12 +88,24 @@ void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
+void AEchoCharacter::Jump()
+{
+	if (ActionState == EActionState::EAS_Unoccupied) Super::Jump();
+}
+
+float AEchoCharacter::TakeDamage(float Damage, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	HandleDamage(Damage);
+	if (EchoOverlay && Attributes) EchoOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+	return Damage;
+}
+
 void AEchoCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
 	Super::GetHit_Implementation(ImpactPoint, Hitter);
 
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-	ActionState = EActionState::EAS_HitReaction;
+	if (Attributes && Attributes->GetHealthPercent() > 0.f) ActionState = EActionState::EAS_HitReaction;
 }
 
 void AEchoCharacter::BeginPlay()
@@ -99,6 +115,28 @@ void AEchoCharacter::BeginPlay()
 	Tags.Add(FName("Player"));
 
 	AddInputMappingContext();
+
+	InitializeEchoOverlay();
+}
+
+void AEchoCharacter::InitializeEchoOverlay()
+{
+	auto PlayerController = Cast<APlayerController>(GetController());
+	if (PlayerController)
+	{
+		auto EchoHUD = Cast<AEchoHUD>(PlayerController->GetHUD());
+		if (EchoHUD)
+		{
+			EchoOverlay = EchoHUD->GetEchoOverlay();
+			if (EchoOverlay)
+			{
+				EchoOverlay->SetHealthBarPercent(Attributes->GetHealthPercent());
+				EchoOverlay->SetStaminaBarPercent(1.f);
+				EchoOverlay->SetGoldCount(0);
+				EchoOverlay->SetSoulsCount(0);
+			}
+		}
+	}
 }
 
 void AEchoCharacter::Attack()
@@ -115,6 +153,14 @@ void AEchoCharacter::Attack()
 void AEchoCharacter::FinishAction()
 {
 	ActionState = EActionState::EAS_Unoccupied;
+}
+
+void AEchoCharacter::Die()
+{
+	Super::Die();
+
+	ActionState = EActionState::EAS_Dead;
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AEchoCharacter::AddInputMappingContext()

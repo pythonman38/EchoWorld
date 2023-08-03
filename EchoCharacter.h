@@ -15,6 +15,7 @@ class UInputComponent;
 class UInputMappingContext;
 class UInputAction;
 class AItem;
+class UEchoOverlay;
 
 UCLASS()
 class ECHOWORLD_API AEchoCharacter : public ABaseCharacter
@@ -26,6 +27,10 @@ public:
 	AEchoCharacter();
 	
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+
+	virtual void Jump() override;
+
+	virtual float TakeDamage(float Damage, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	/** </AActor> */
 
 	/** <IHitInterface */
@@ -41,6 +46,8 @@ protected:
 	virtual void Attack() override;
 
 	virtual void FinishAction() override;
+
+	virtual void Die() override;
 	/** </ABaseCharacter> */
 
 protected:
@@ -62,6 +69,8 @@ protected:
 
 	bool CanDisarm();
 
+	void InitializeEchoOverlay();
+
 	UFUNCTION(BlueprintCallable)
 	void AttachWeaponToBack();
 
@@ -71,6 +80,12 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	bool bCarryingWeapon;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	ECharacterState CharacterState;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	EActionState ActionState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USpringArmComponent> CameraBoom;
@@ -105,18 +120,16 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AItem> OverlappingItem;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	ECharacterState CharacterState;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	EActionState ActionState;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UAnimMontage> EquipMontage;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = HUD, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UEchoOverlay> EchoOverlay;
 
 public:
 	// Getters for private variables
 	FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+	FORCEINLINE EActionState GetActionState() const { return ActionState; }
 
 	// Setters for private variables
 	FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }

@@ -56,6 +56,7 @@ void AWeapon::AttackMeshToSocket(USceneComponent* InParent, const FName& InSocke
 void AWeapon::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (GetOwner()->ActorHasTag(TEXT("Enemy")) && OtherActor->ActorHasTag(TEXT("Enemy"))) return;
+	if (GetOwner()->ActorHasTag(TEXT("Player")) && OtherActor->ActorHasTag(TEXT("Player"))) return;
 
 	FHitResult BoxHit;
 	BoxTrace(BoxHit);
@@ -63,6 +64,7 @@ void AWeapon::OnBoxBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor
 	if (BoxHit.GetActor())
 	{
 		if (GetOwner()->ActorHasTag(TEXT("Enemy")) && BoxHit.GetActor()->ActorHasTag(TEXT("Enemy"))) return;
+		if (GetOwner()->ActorHasTag(TEXT("Player")) && BoxHit.GetActor()->ActorHasTag(TEXT("Player"))) return;
 		UGameplayStatics::ApplyDamage(BoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
 		ExecuteGetHit(BoxHit);
 		CreateFields(BoxHit.ImpactPoint);
