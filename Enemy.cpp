@@ -10,6 +10,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "HealthBarComponent.h"
 #include "Perception/PawnSensingComponent.h"
+#include "Soul.h"
 #include "Weapon.h"
 
 // Sets default values
@@ -87,6 +88,17 @@ void AEnemy::Die()
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetLifeSpan(6.f);
 	GetCharacterMovement()->bOrientRotationToMovement = false;
+
+	SpawnSoul();
+}
+
+void AEnemy::SpawnSoul()
+{
+	if (GetWorld() && SoulClass && Attributes)
+	{
+		auto SpawnedSoul = GetWorld()->SpawnActor<ASoul>(SoulClass, GetActorLocation(), GetActorRotation());
+		if (SpawnedSoul) SpawnedSoul->SetSouls(Attributes->GetSouls());
+	}
 }
 
 void AEnemy::Attack()

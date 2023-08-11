@@ -3,8 +3,7 @@
 
 #include "Treasure.h"
 
-#include "EchoCharacter.h"
-#include "Kismet/GameplayStatics.h"
+#include "PickupInterface.h"
 
 ATreasure::ATreasure()
 {
@@ -20,10 +19,12 @@ void ATreasure::Tick(float DeltaTime)
 
 void ATreasure::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	AEchoCharacter* EchoCharacter = Cast<AEchoCharacter>(OtherActor);
-	if (EchoCharacter)
+	auto PickupInterface = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterface)
 	{
-		if (PickupSound) UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
+		PickupInterface->AddGold(this);
+
+		SpawnPickupSound();
 		Destroy();
 	}
 }

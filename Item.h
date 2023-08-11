@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UNiagaraComponent;
+class UNiagaraSystem;
 
 UENUM(BlueprintType)
 enum class EItemState : uint8
@@ -38,13 +39,15 @@ protected:
 	UFUNCTION(BlueprintPure)
 	float TransformedCos();
 
-	void UpdateOverlappingItem(AActor* OtherActor, AItem* Item);
-
 	UFUNCTION()
 	virtual void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION()
 	virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	void SpawnPickupSystem();
+
+	void SpawnPickupSound();
 
 private:	
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Sine Parameters", meta = (AllowPrivateAccess))
@@ -59,7 +62,6 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess))
 	EItemState ItemState;
 
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Static Mesh", meta = (AllowPrivateAccess))
 	TObjectPtr<UStaticMeshComponent> ItemMesh;
 
@@ -67,12 +69,18 @@ private:
 	TObjectPtr<USphereComponent> Sphere;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Items, meta = (AllowPrivateAccess))
-	TObjectPtr<UNiagaraComponent> EmbersEffect;
+	TObjectPtr<UNiagaraComponent> ItemEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Niagara System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UNiagaraSystem> PickupEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Niagara System", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USoundBase> PickupSound;
 
 public:
 	// Getters for private variables
 	FORCEINLINE EItemState GetItemState() const { return ItemState; }
-	FORCEINLINE TObjectPtr<UNiagaraComponent> GetEmbersEffect() const { return EmbersEffect; }
+	FORCEINLINE TObjectPtr<UNiagaraComponent> GetItemEffect() const { return ItemEffect; }
 	FORCEINLINE TObjectPtr<UStaticMeshComponent> GetItemMesh() const { return ItemMesh; }
 	FORCEINLINE TObjectPtr<USphereComponent> GetSphere() const { return Sphere; }
 

@@ -21,9 +21,19 @@ public:
 
 	void ReceiveDamage(float Damage);
 
+	void UseStamina(float StaminaCost);
+
 	float GetHealthPercent();
 
+	float GetStaminaPercent();
+
+	void RegenerateStamina(float DeltaTime);
+
 	bool IsAlive();
+
+	void AddSouls(int32 NumberOfSouls);
+
+	void AddGold(int32 AmountOfGold);
 
 protected:
 	// Called when the game starts
@@ -36,5 +46,28 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
 	float MaxHealth;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
+	float Stamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
+	float MaxStamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
+	int32 Gold;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
+	int32 Souls;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
+	float DodgeCost;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Actor Attributes", meta = (AllowPrivateAccess = "true"))
+	float StaminaRegenRate;
 	
+public:
+	// Getters for private variables
+	FORCEINLINE float GetDodgeCost() const { return DodgeCost; }
+	FORCEINLINE float GetStamina() const { return Stamina; }
+	FORCEINLINE int32 GetGoldAmount() const { return Gold; }
+	FORCEINLINE int32 GetSouls() const { return Souls; }
 };

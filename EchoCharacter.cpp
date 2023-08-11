@@ -19,6 +19,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GroomComponent.h"
 #include "Item.h"
+#include "Soul.h"
+#include "Treasure.h"
 #include "Weapon.h"
 
 
@@ -29,7 +31,7 @@ AEchoCharacter::AEchoCharacter() :
 	ActionState(EActionState::EAS_Unoccupied),
 	bCarryingWeapon(false)
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
@@ -63,6 +65,17 @@ AEchoCharacter::AEchoCharacter() :
 	Eyebrows->AttachmentName = FString("head");
 }
 
+void AEchoCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (Attributes && EchoOverlay)
+	{
+		Attributes->RegenerateStamina(DeltaTime);
+		EchoOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+}
+
 void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -85,6 +98,9 @@ void AEchoCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 		// Attacking
 		EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Attack);
+
+		// Dodging
+		EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Triggered, this, &AEchoCharacter::Dodge);
 	}
 }
 
@@ -106,6 +122,29 @@ void AEchoCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* H
 
 	SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (Attributes && Attributes->GetHealthPercent() > 0.f) ActionState = EActionState::EAS_HitReaction;
+}
+
+void AEchoCharacter::SetOverlappingItem(AItem* Item)
+{
+	OverlappingItem = Item;
+}
+
+void AEchoCharacter::AddSouls(ASoul* Soul)
+{
+	if (Attributes && EchoOverlay)
+	{
+		Attributes->AddSouls(Soul->GetSouls());
+		EchoOverlay->SetSoulsCount(Attributes->GetSouls());
+	}
+}
+
+void AEchoCharacter::AddGold(ATreasure* Treasure)
+{
+	if (Attributes && EchoOverlay)
+	{
+		Attributes->AddGold(Treasure->GetGoldAmount());
+		EchoOverlay->SetGoldCount(Attributes->GetGoldAmount());
+	}
 }
 
 void AEchoCharacter::BeginPlay()
@@ -241,6 +280,20 @@ void AEchoCharacter::DisarmWeapon()
 	PlayMontageSection(EquipMontage, FName("Unequip"));
 	CharacterState = ECharacterState::ECS_Unequipped;
 	ActionState = EActionState::EAS_Equipping;
+}
+
+void AEchoCharacter::Dodge()
+{
+	if (ActionState != EActionState::EAS_Unoccupied) return;
+
+	if (Attributes && Attributes->GetStamina() > Attributes->GetDodgeCost())
+	{
+		PlayMontageSection(DodgeMontage, FName("Dodge"));
+		ActionState = EActionState::EAS_Dodging;
+		Attributes->UseStamina(Attributes->GetDodgeCost());
+		if (EchoOverlay) EchoOverlay->SetStaminaBarPercent(Attributes->GetStaminaPercent());
+	}
+	
 }
 
 bool AEchoCharacter::CanArm()

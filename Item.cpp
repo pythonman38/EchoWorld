@@ -4,8 +4,10 @@
 #include "Item.h"
 
 #include "Components/SphereComponent.h"
-#include "EchoCharacter.h"
+#include "Kismet/GameplayStatics.h"
 #include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "PickupInterface.h"
 
 // Sets default values
 AItem::AItem() :
@@ -24,8 +26,8 @@ AItem::AItem() :
 	Sphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere"));
 	Sphere->SetupAttachment(GetRootComponent());
 
-	EmbersEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
-	EmbersEffect->SetupAttachment(GetRootComponent());
+	ItemEffect = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Embers"));
+	ItemEffect->SetupAttachment(GetRootComponent());
 }
 
 // Called when the game starts or when spawned
@@ -47,22 +49,26 @@ float AItem::TransformedCos()
 	return Amplitude * FMath::Cos(RunningTime * TimeConstant);
 }
 
-void AItem::UpdateOverlappingItem(AActor* OtherActor, AItem* Item)
-{
-	TObjectPtr<AEchoCharacter> EchoCharacter = Cast<AEchoCharacter>(OtherActor);
-	if (EchoCharacter) EchoCharacter->SetOverlappingItem(Item);
-}
-
 void AItem::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	const FString OtherActorName = OtherActor->GetName();
-	UpdateOverlappingItem(OtherActor, this);
+	auto PickupInterface = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterface) PickupInterface->SetOverlappingItem(this);
 }
 
 void AItem::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	const FString OtherActorName = FString("Ending Overlap with: ") + OtherActor->GetName();
-	UpdateOverlappingItem(OtherActor, nullptr);
+	auto PickupInterface = Cast<IPickupInterface>(OtherActor);
+	if (PickupInterface) PickupInterface->SetOverlappingItem(nullptr);
+}
+
+void AItem::SpawnPickupSystem()
+{
+	if (PickupEffect) UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, PickupEffect, GetActorLocation());
+}
+
+void AItem::SpawnPickupSound()
+{
+	if (PickupSound) UGameplayStatics::SpawnSoundAtLocation(this, PickupSound, GetActorLocation());
 }
 
 // Called every frame

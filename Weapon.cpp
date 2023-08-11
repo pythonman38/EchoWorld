@@ -44,7 +44,7 @@ void AWeapon::EquipWeapon(USceneComponent* InParent, FName InSocketName, AActor*
 	AttackMeshToSocket(InParent, InSocketName);
 	if (GetSphere()) GetSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (EquipSound && bIsCharacter) UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
-	if (GetEmbersEffect()) GetEmbersEffect()->Deactivate();
+	if (GetItemEffect()) GetItemEffect()->Deactivate();
 }
 
 void AWeapon::AttackMeshToSocket(USceneComponent* InParent, const FName& InSocketName)

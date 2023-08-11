@@ -7,11 +7,13 @@
 #include "CharacterTypes.h"
 #include "Enemy.generated.h"
 
-class UInputComponent;
-class UHealthBarComponent;
 class AAIController;
-class UPawnSensingComponent;
+class ASoul;
 class AWeapon;
+class UHealthBarComponent;
+class UInputComponent;
+class UPawnSensingComponent;
+
 
 UCLASS()
 class ECHOWORLD_API AEnemy : public ABaseCharacter
@@ -80,6 +82,8 @@ protected:
 
 	bool CanAttack();
 
+	void SpawnSoul();
+
 private:
 	FTimerHandle PatrolTimer;
 
@@ -113,6 +117,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	TSubclassOf<AWeapon> WeaponClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<ASoul> SoulClass;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Widget, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UHealthBarComponent> HealthBarWidget;
